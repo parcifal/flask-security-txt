@@ -1,0 +1,55 @@
+stages:
+  - lint
+  - test
+  - build
+  - publish
+
+pylint:
+  image: python
+  stage: lint
+  script:
+    - pip install . pylint
+    - pylint *.py
+  needs: [ ]
+  dependencies: [ ]
+
+pytest:
+  image: python
+  stage: test
+  artifacts:
+    reports:
+      junit: pytest.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  coverage: /^TOTAL[\\s\\d]+\\s(\\d+\\%)$/
+  script:
+    - pip install . pytest coverage
+    - coverage run --source=common -m pytest --junitxml pytest.xml test
+    - coverage xml -o coverage.xml
+    - coverage report
+  needs: [ ]
+  dependencies: [ ]
+
+setup:
+  image: python
+  stage: build
+  artifacts:
+    paths:
+      - dist/*
+  script:
+    - pip install . setuptools wheel
+    - python setup.py sdist bdist_wheel
+
+pypi:
+  image: python
+  stage: publish
+  variables:
+    TWINE_USERNAME:        __token__
+    TWINE_PASSWORD:        $PYPI_TOKEN
+    TWINE_REPOSITORY_URL:  https://pypi.org/project/flask_security_txt
+  script:
+    - pip install twine
+    - python -m twine upload --verbose --repository pypi dist/*
+  only:
+    - master
