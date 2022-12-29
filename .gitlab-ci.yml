@@ -47,7 +47,7 @@ pypi:
   variables:
     TWINE_USERNAME:        __token__
     TWINE_PASSWORD:        $PYPI_TOKEN
-    TWINE_REPOSITORY_URL:  https://pypi.org/project/flask_security_txt
+    TWINE_REPOSITORY_URL:  https://pypi.org/project/flask_security_txt/
   script:
     - pip install twine
     - python -m twine upload --verbose --repository pypi dist/*
