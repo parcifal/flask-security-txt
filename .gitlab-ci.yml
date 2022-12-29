@@ -41,16 +41,31 @@ setup:
     - pip install . setuptools wheel
     - python setup.py sdist bdist_wheel
 
+test-pypi:
+  image: python
+  stage: publish
+  variables:
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $TEST_PYPI_TOKEN
+  script:
+    - pip install twine
+    - python -m twine upload --repository testpypi dist/*
+  dependencies:
+    - setup
+  only:
+    - develop
+
 pypi:
   image: python
   stage: publish
   variables:
-    TWINE_USERNAME:        __token__
-    TWINE_PASSWORD:        $PYPI_TOKEN
-    TWINE_REPOSITORY_URL:  https://pypi.org/project/flask_security_txt/
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $PYPI_TOKEN
   script:
     - pip install twine
-    - python -m twine upload --verbose --repository pypi dist/*
+    - python -m twine upload --verbose dist/*
+  dependencies:
+    - setup
   only:
     - master
 
@@ -64,5 +79,7 @@ gitlab:
   script:
     - pip install twine
     - python -m twine upload --verbose --repository gitlab dist/*
+  dependencies:
+    - setup
   only:
     - master
