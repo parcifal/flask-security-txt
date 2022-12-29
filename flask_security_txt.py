@@ -7,8 +7,17 @@ from collections.abc import Iterable
 from datetime import datetime as dt, timedelta as td
 from flask import Flask, Response, request, url_for, current_app
 
-
 # pylint: disable=too-few-public-methods
+from werkzeug.routing import BuildError
+
+
+def build_absolute_url(path: str) -> str:
+    """
+    Build a security.txt-compatible absolute URL for the specified path.
+    """
+    return f"https://{request.host}" + path
+
+
 class SecurityTxt:
     """
     Extends Flask application with a dynamically generated security.txt.
@@ -19,6 +28,7 @@ class SecurityTxt:
                  default_endpoint: str = "security_txt",
                  default_contact_mailbox: str = "security",
                  default_expires_offset: tuple = (0, 0, 0, 0, 0, 0, 1),
+                 default_canonical: str = None,
                  default_dir: str = ".well-known",
                  default_file_name: str = "security.txt"):
         self.app = app
@@ -26,6 +36,7 @@ class SecurityTxt:
         self._default_endpoint = default_endpoint
         self._default_contact_mailbox = default_contact_mailbox
         self._default_expires_offset = default_expires_offset
+        self._default_canonical = default_canonical or default_endpoint
         self._default_dir = default_dir
         self._default_file_name = default_file_name
 
@@ -47,6 +58,8 @@ class SecurityTxt:
                               self._default_contact_mailbox)
         app.config.setdefault("SECURITY_TXT_EXPIRES_OFFSET",
                               self._default_expires_offset)
+        app.config.setdefault("SECURITY_TXT_CANONICAL",
+                              self._default_canonical)
 
         _dir = app.config.get("WELL_KNOWN_DIR",
                               self._default_dir)
@@ -74,6 +87,7 @@ class SecurityTxt:
             assert isinstance(item, Iterable)
 
             for value in item:
+                assert isinstance(value, str)
                 body.append(f"{key}: {value}")
 
         return Response("\n".join(body), mimetype="text/plain")
@@ -102,6 +116,39 @@ class SecurityTxt:
                 self._get_field_value_hiring()
         }
 
+    def _get_urls_from_value(self, value, schemes=None):
+        """
+        Parse zero or more URLs from the specified config value. The URLs can
+        be defined as either a full URL string starting with one of the
+        specified schemes, or as an end-point that can be resolved by the
+        Flask application.
+        """
+        if not value:
+            return
+        if schemes is None:
+            schemes = ["https://"]
+        if isinstance(value, str):
+            value = [value]
+
+        assert isinstance(value, Iterable) and \
+               isinstance(schemes, Iterable)
+
+        for item in value:
+            assert isinstance(item, str)
+
+            if any(item.startswith(scheme) for scheme in schemes):
+                yield item
+                continue
+
+            try:
+                yield build_absolute_url(url_for(item))
+            except BuildError as error:
+                raise ValueError(
+                    "An URL field value must either be string starting with "
+                    "https:// or a end-point name that can be resolved by "
+                    "the flask application."
+                ) from error
+
     def _get_field_value_contact(self) -> str:
         """
         @return:
@@ -109,17 +156,21 @@ class SecurityTxt:
         """
         value = current_app.config.get("SECURITY_TXT_CONTACT")
 
-        if value is not None:
-            assert isinstance(value, (str, list, tuple))
-            return value
+        if not value:
+            mailbox = current_app.config.get("SECURITY_TXT_CONTACT_MAILBOX")
+            assert isinstance(mailbox, str)
+            domain = request.host.rsplit(":", 1)[0]
+            yield f"mailto:{mailbox}@{domain}"
+            return
 
-        value = current_app.config.get("SECURITY_TXT_CONTACT_MAILBOX")
-
-        assert isinstance(value, str)
-
-        domain = request.host.rsplit(":", 1)[0]
-
-        return f"mailto:{value}@{domain}"
+        try:
+            yield from self._get_urls_from_value(value, [
+                "https://", "mailto:", "tel:"
+            ])
+        except ValueError as error:
+            raise ValueError(
+                "Invalid contact configuration value."
+            ) from error
 
     def _get_field_value_expires(self) -> str:
         """
@@ -131,7 +182,7 @@ class SecurityTxt:
         if isinstance(value, str):
             return value
         if isinstance(value, dt):
-            return value.isoformat()
+            return value.replace(microsecond=0).isoformat()
 
         assert value is None
 
@@ -143,21 +194,35 @@ class SecurityTxt:
             value = dt.now() + td(*offset)
 
         assert isinstance(value, dt)
-        return value.isoformat()
+        return value.replace(microsecond=0).isoformat()
 
     def _get_field_value_encryption(self):
         """
         @return:
             The value of the encryption field.
         """
-        return current_app.config.get("SECURITY_TXT_ENCRYPTION")
+        try:
+            yield from self._get_urls_from_value(
+                current_app.config.get("SECURITY_TXT_ENCRYPTION")
+            )
+        except ValueError as error:
+            raise ValueError(
+                "Invalid encryption configuration value."
+            ) from error
 
     def _get_field_value_acknowledgements(self):
         """
         @return:
             The value of the acknowledgements field.
         """
-        return current_app.config.get("SECURITY_TXT_ACKNOWLEDGMENTS")
+        try:
+            yield from self._get_urls_from_value(
+                current_app.config.get("SECURITY_TXT_ACKNOWLEDGEMENTS")
+            )
+        except ValueError as error:
+            raise ValueError(
+                "Invalid acknowledgements configuration value."
+            ) from error
 
     def _get_field_value_preferred_languages(self):
         """
@@ -184,26 +249,39 @@ class SecurityTxt:
         @return:
             The value of the canonical field.
         """
-        value = current_app.config.get("SECURITY_TXT_CANONICAL")
-
-        if value is not None:
-            assert isinstance(value, str)
-            return value
-
-        endpoint = current_app.config.get("SECURITY_TXT_ENDPOINT")
-
-        return f"https://{request.host}" + url_for(endpoint)
+        try:
+            yield from self._get_urls_from_value(
+                current_app.config.get("SECURITY_TXT_CANONICAL")
+            )
+        except ValueError as error:
+            raise ValueError(
+                "Invalid canonical configuration value."
+            ) from error
 
     def _get_field_value_policy(self):
         """
         @return:
             The value of the policy field.
         """
-        return current_app.config.get("SECURITY_TXT_POLICY")
+        try:
+            yield from self._get_urls_from_value(
+                current_app.config.get("SECURITY_TXT_POLICY")
+            )
+        except ValueError as error:
+            raise ValueError(
+                "Invalid policy configuration value."
+            ) from error
 
     def _get_field_value_hiring(self):
         """
         @return:
             The value of the hiring field.
         """
-        return current_app.config.get("SECURITY_TXT_HIRING")
+        try:
+            yield from self._get_urls_from_value(
+                current_app.config.get("SECURITY_TXT_HIRING")
+            )
+        except ValueError as error:
+            raise ValueError(
+                "Invalid hiring configuration value."
+            ) from error
