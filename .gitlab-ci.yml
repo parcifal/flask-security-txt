@@ -25,7 +25,7 @@ pytest:
   coverage: /^TOTAL[\\s\\d]+\\s(\\d+\\%)$/
   script:
     - pip install . pytest coverage
-    - coverage run --source=common -m pytest --junitxml pytest.xml test
+    - coverage run --source=flask_security_txt -m pytest --junitxml pytest.xml test
     - coverage xml -o coverage.xml
     - coverage report
   needs: [ ]
@@ -51,5 +51,18 @@ pypi:
   script:
     - pip install twine
     - python -m twine upload --verbose --repository pypi dist/*
+  only:
+    - master
+
+gitlab:
+  image: python
+  stage: publish
+  variables:
+    TWINE_USERNAME:        $CI_REGISTRY_USER
+    TWINE_PASSWORD:        $CI_REGISTRY_PASSWORD
+    TWINE_REPOSITORY_URL:  $CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi
+  script:
+    - pip install twine
+    - python -m twine upload --verbose --repository gitlab dist/*
   only:
     - master
