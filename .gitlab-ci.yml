@@ -44,6 +44,9 @@ setup:
 test-pypi:
   image: python
   stage: publish
+  environment:
+    name: TestPyPI
+    url:  https://test.pypi.org/project/flask_security_txt/
   variables:
     TWINE_USERNAME: __token__
     TWINE_PASSWORD: $TEST_PYPI_TOKEN
@@ -58,6 +61,9 @@ test-pypi:
 pypi:
   image: python
   stage: publish
+  environment:
+    name: PyPI
+    url:  https://pypi.org/project/flask_security_txt/
   variables:
     TWINE_USERNAME: __token__
     TWINE_PASSWORD: $PYPI_TOKEN
