@@ -17,14 +17,14 @@ class SecurityTxt:
     # pylint: disable=too-many-arguments
     def __init__(self, app: Flask = None,
                  default_endpoint: str = "security_txt",
-                 default_contact_local_part: str = "security",
+                 default_contact_mailbox: str = "security",
                  default_expires_offset: tuple = (0, 0, 0, 0, 0, 0, 1),
                  default_dir: str = ".well-known",
                  default_file_name: str = "security.txt"):
         self.app = app
 
         self._default_endpoint = default_endpoint
-        self._default_contact_local_part = default_contact_local_part
+        self._default_contact_mailbox = default_contact_mailbox
         self._default_expires_offset = default_expires_offset
         self._default_dir = default_dir
         self._default_file_name = default_file_name
@@ -43,8 +43,8 @@ class SecurityTxt:
 
         app.config.setdefault("SECURITY_TXT_ENDPOINT",
                               self._default_endpoint)
-        app.config.setdefault("SECURITY_TXT_CONTACT_LOCAL_PART",
-                              self._default_contact_local_part)
+        app.config.setdefault("SECURITY_TXT_CONTACT_MAILBOX",
+                              self._default_contact_mailbox)
         app.config.setdefault("SECURITY_TXT_EXPIRES_OFFSET",
                               self._default_expires_offset)
 
@@ -113,7 +113,7 @@ class SecurityTxt:
             assert isinstance(value, (str, list, tuple))
             return value
 
-        value = current_app.config.get("SECURITY_TXT_CONTACT_LOCAL_PART")
+        value = current_app.config.get("SECURITY_TXT_CONTACT_MAILBOX")
 
         assert isinstance(value, str)
 
