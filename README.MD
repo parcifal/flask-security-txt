@@ -2,10 +2,23 @@
 
 This extension allows Flask-based apps to generate a security.txt.
 
-## Configuration
+## Installation
 
-The following properties can be set in your Flask configuration in order to
-customize your security.txt.
+```bash
+pip install flask-securitytxt
+```
+
+## Example
+
+```python
+from flask import Flask
+from flask_security_txt import SecurityTxt
+
+app = Flask(__name__)
+security_txt = SecurityTxt(app)
+```
+
+## Configuration
 
 | Property                           | Type                | Default                 | Description                                                                                                                                                                                                                                                                              |
 |------------------------------------|---------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

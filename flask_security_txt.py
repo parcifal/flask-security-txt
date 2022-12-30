@@ -1,23 +1,15 @@
 """
 The Flask-SecurityTxt extension.
 """
-
+import os
 from collections.abc import Iterable
 
 from datetime import datetime as dt, timedelta as td
 from flask import Flask, Response, request, url_for, current_app
-
-# pylint: disable=too-few-public-methods
 from werkzeug.routing import BuildError
 
 
-def build_absolute_url(path: str) -> str:
-    """
-    Build a security.txt-compatible absolute URL for the specified path.
-    """
-    return f"https://{request.host}" + path
-
-
+# pylint: disable=too-few-public-methods, too-many-instance-attributes
 class SecurityTxt:
     """
     Extends Flask application with a dynamically generated security.txt.
@@ -75,7 +67,7 @@ class SecurityTxt:
         @return:
             The full security.txt as an HTTP response.
         """
-        body = []
+        lines = []
 
         for key, item in self._get_fields().items():
             if item is None:
@@ -88,9 +80,11 @@ class SecurityTxt:
 
             for value in item:
                 assert isinstance(value, str)
-                body.append(f"{key}: {value}")
+                lines.append(f"{key}: {value}")
 
-        return Response("\n".join(body), mimetype="text/plain")
+        body = "\n".join(lines)
+
+        return Response(body, mimetype="text/plain")
 
     def _get_fields(self) -> dict:
         """
@@ -98,22 +92,14 @@ class SecurityTxt:
             A dict mapping the keys to the values of the security.txt fields.
         """
         return {
-            "Contact":
-                self._get_field_value_contact(),
-            "Expires":
-                self._get_field_value_expires(),
-            "Encryption":
-                self._get_field_value_encryption(),
-            "Acknowledgments":
-                self._get_field_value_acknowledgements(),
-            "Preferred-Languages":
-                self._get_field_value_preferred_languages(),
-            "Canonical":
-                self._get_field_value_canonical(),
-            "Policy":
-                self._get_field_value_policy(),
-            "Hiring":
-                self._get_field_value_hiring()
+            "Contact": self._get_field_value_contact(),
+            "Expires": self._get_field_value_expires(),
+            "Encryption": self._get_field_value_encryption(),
+            "Acknowledgments": self._get_field_value_acknowledgements(),
+            "Preferred-Languages": self._get_field_value_preferred_languages(),
+            "Canonical": self._get_field_value_canonical(),
+            "Policy": self._get_field_value_policy(),
+            "Hiring": self._get_field_value_hiring()
         }
 
     def _get_urls_from_value(self, value, schemes=None):
@@ -130,8 +116,7 @@ class SecurityTxt:
         if isinstance(value, str):
             value = [value]
 
-        assert isinstance(value, Iterable) and \
-               isinstance(schemes, Iterable)
+        assert isinstance(value, Iterable) and isinstance(schemes, Iterable)
 
         for item in value:
             assert isinstance(item, str)
@@ -140,13 +125,19 @@ class SecurityTxt:
                 yield item
                 continue
 
+            if current_app.has_static_folder and os.path.exists(
+                    os.path.join(current_app.static_folder, item)):
+                yield url_for("static", filename=item,
+                              _external=True, _scheme="https")
+                continue
+
             try:
-                yield build_absolute_url(url_for(item))
+                yield url_for(item, _external=True, _scheme="https")
             except BuildError as error:
                 raise ValueError(
                     "An URL field value must either be string starting with "
-                    "https:// or a end-point name that can be resolved by "
-                    "the flask application."
+                    "https://, the name of a static file or an end-point "
+                    "name that can be resolved by the flask application."
                 ) from error
 
     def _get_field_value_contact(self) -> str:
@@ -165,12 +156,10 @@ class SecurityTxt:
 
         try:
             yield from self._get_urls_from_value(value, [
-                "https://", "mailto:", "tel:"
-            ])
+                "https://", "mailto:", "tel:"])
         except ValueError as error:
             raise ValueError(
-                "Invalid contact configuration value."
-            ) from error
+                "Invalid contact configuration value.") from error
 
     def _get_field_value_expires(self) -> str:
         """
@@ -203,12 +192,11 @@ class SecurityTxt:
         """
         try:
             yield from self._get_urls_from_value(
-                current_app.config.get("SECURITY_TXT_ENCRYPTION")
-            )
+                current_app.config.get("SECURITY_TXT_ENCRYPTION"), [
+                    "https://", "dns:", "openpgp4fpr:"])
         except ValueError as error:
             raise ValueError(
-                "Invalid encryption configuration value."
-            ) from error
+                "Invalid encryption configuration value.") from error
 
     def _get_field_value_acknowledgements(self):
         """
@@ -217,12 +205,10 @@ class SecurityTxt:
         """
         try:
             yield from self._get_urls_from_value(
-                current_app.config.get("SECURITY_TXT_ACKNOWLEDGEMENTS")
-            )
+                current_app.config.get("SECURITY_TXT_ACKNOWLEDGEMENTS"))
         except ValueError as error:
             raise ValueError(
-                "Invalid acknowledgements configuration value."
-            ) from error
+                "Invalid acknowledgements configuration value.") from error
 
     def _get_field_value_preferred_languages(self):
         """
@@ -251,12 +237,10 @@ class SecurityTxt:
         """
         try:
             yield from self._get_urls_from_value(
-                current_app.config.get("SECURITY_TXT_CANONICAL")
-            )
+                current_app.config.get("SECURITY_TXT_CANONICAL"))
         except ValueError as error:
             raise ValueError(
-                "Invalid canonical configuration value."
-            ) from error
+                "Invalid canonical configuration value.") from error
 
     def _get_field_value_policy(self):
         """
@@ -265,12 +249,10 @@ class SecurityTxt:
         """
         try:
             yield from self._get_urls_from_value(
-                current_app.config.get("SECURITY_TXT_POLICY")
-            )
+                current_app.config.get("SECURITY_TXT_POLICY"))
         except ValueError as error:
             raise ValueError(
-                "Invalid policy configuration value."
-            ) from error
+                "Invalid policy configuration value.") from error
 
     def _get_field_value_hiring(self):
         """
@@ -279,9 +261,7 @@ class SecurityTxt:
         """
         try:
             yield from self._get_urls_from_value(
-                current_app.config.get("SECURITY_TXT_HIRING")
-            )
+                current_app.config.get("SECURITY_TXT_HIRING"))
         except ValueError as error:
             raise ValueError(
-                "Invalid hiring configuration value."
-            ) from error
+                "Invalid hiring configuration value.") from error
