@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from datetime import datetime as dt, timedelta as td
 from flask import Flask, Response, request, url_for, current_app
+from pgpy import PGPKey, PGPMessage
 from werkzeug.routing import BuildError
 
 
@@ -22,8 +23,10 @@ class SecurityTxt:
                  default_expires_offset: tuple = (0, 0, 0, 0, 0, 0, 1),
                  default_canonical: str = None,
                  default_dir: str = ".well-known",
-                 default_file_name: str = "security.txt"):
+                 default_file_name: str = "security.txt",
+                 default_sign_key: str = None):
         self.app = app
+        self.sign_key = None
 
         self._default_endpoint = default_endpoint
         self._default_contact_mailbox = default_contact_mailbox
@@ -31,6 +34,7 @@ class SecurityTxt:
         self._default_canonical = default_canonical or default_endpoint
         self._default_dir = default_dir
         self._default_file_name = default_file_name
+        self._default_sign_key = default_sign_key
 
         if app is not None:
             self.init_app(app)
@@ -62,6 +66,12 @@ class SecurityTxt:
                          app.config.get("SECURITY_TXT_ENDPOINT"),
                          self._send_security_txt)
 
+        sign_key = app.config.get("SECURITY_TXT_SIGN_KEY",
+                                  self._default_sign_key)
+
+        if sign_key is not None:
+            self.sign_key, _ = PGPKey.from_file(sign_key)
+
     def _send_security_txt(self):
         """
         @return:
@@ -83,6 +93,14 @@ class SecurityTxt:
                 lines.append(f"{key}: {value}")
 
         body = "\n".join(lines)
+
+        if self.sign_key is not None:
+            assert isinstance(self.sign_key, PGPKey)
+
+            message = PGPMessage.new(body, cleartext=True)
+            message |= self.sign_key.sign(message)
+
+            body = str(message)
 
         return Response(body, mimetype="text/plain")
 
