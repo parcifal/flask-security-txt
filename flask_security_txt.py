@@ -116,17 +116,18 @@ class SecurityTxt:
             if item is None:
                 continue
 
+            comment_key = f"SECURITY_TXT_{key.upper()}_COMMENT"
+
+            if comment_key in current_app.config:
+                comment = current_app.config.get(comment_key)
+                lines.append(comment)
+
             if isinstance(item, str):
                 item = [item]
 
             assert isinstance(item, Iterable)
 
             for value in item:
-                comment_key = f"SECURITY_TXT_{key.upper()}_COMMENT"
-
-                if comment_key in current_app.config:
-                    comment = current_app.config.get(comment_key)
-                    lines.append(comment)
 
                 assert isinstance(value, str)
                 lines.append(f"{key}: {value}")

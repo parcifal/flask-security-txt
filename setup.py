@@ -5,4 +5,6 @@ Setup the src package.
 """
 
 import setuptools
-setuptools.setup()
+setuptools.setup(
+    long_description=os.re
+)
