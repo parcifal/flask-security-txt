@@ -38,53 +38,51 @@ setup:
     paths:
       - dist/*
   script:
-    - pip install . setuptools wheel
-    - python setup.py sdist bdist_wheel
+    - pip install --upgrade build
+    - python -m build
 
-test-pypi:
+.publish:
   image: python
   stage: publish
+  script:
+    - pip install twine
+    - python -m twine upload --verbose --repository $TWINE_REPOSITORY dist/*
+
+test-pypi:
+  extends: .publish
   environment:
     name: TestPyPI
     url:  https://test.pypi.org/project/Flask-SecurityTxt/
   variables:
-    TWINE_USERNAME: __token__
-    TWINE_PASSWORD: $TEST_PYPI_TOKEN
-  script:
-    - pip install twine
-    - python -m twine upload --repository testpypi dist/*
+    TWINE_USERNAME:   __token__
+    TWINE_PASSWORD:   $TEST_PYPI_TOKEN
+    TWINE_REPOSITORY: testpypi
   dependencies:
     - setup
   only:
     - develop
 
 pypi:
-  image: python
-  stage: publish
+  extends: .publish
   environment:
     name: PyPI
     url:  https://pypi.org/project/Flask-SecurityTxt/
   variables:
-    TWINE_USERNAME: __token__
-    TWINE_PASSWORD: $PYPI_TOKEN
-  script:
-    - pip install twine
-    - python -m twine upload --verbose dist/*
+    TWINE_USERNAME:   __token__
+    TWINE_PASSWORD:   $PYPI_TOKEN
+    TWINE_REPOSITORY: pypi
   dependencies:
     - setup
   only:
     - master
 
 gitlab:
-  image: python
-  stage: publish
+  extends: .publish
   variables:
     TWINE_USERNAME:        $CI_REGISTRY_USER
     TWINE_PASSWORD:        $CI_REGISTRY_PASSWORD
+    TWINE_REPOSITORY:      gitlab
     TWINE_REPOSITORY_URL:  $CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi
-  script:
-    - pip install twine
-    - python -m twine upload --verbose --repository gitlab dist/*
   dependencies:
     - setup
   only:
