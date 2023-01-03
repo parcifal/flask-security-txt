@@ -4,7 +4,7 @@ build-backend  = "setuptools.build_meta"
 
 [project]
 name          = "Flask-SecurityTxt"
-version       = "1.3.2"
+version       = "1.3.3"
 description   = "Generate security.txt for Flask-based apps."
 readme        = "README.MD"
 authors       = [

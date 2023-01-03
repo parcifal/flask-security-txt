@@ -9,7 +9,7 @@ pylint:
   stage: lint
   script:
     - pip install . pylint
-    - pylint *.py
+    - pylint *.py test
   needs: [ ]
   dependencies: [ ]
 

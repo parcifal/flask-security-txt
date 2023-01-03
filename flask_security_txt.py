@@ -4,7 +4,7 @@ The Flask-SecurityTxt extension.
 import os
 from collections.abc import Iterable
 
-from datetime import datetime as dt, timedelta as td
+from datetime import datetime as dt, timedelta as td, timezone as tz
 from importlib.metadata import version
 
 from flask import Flask, Response, request, url_for, current_app
@@ -242,9 +242,9 @@ class SecurityTxt:
         offset = current_app.config.get("SECURITY_TXT_EXPIRES_OFFSET")
 
         if isinstance(offset, td):
-            value = dt.now() + offset
+            value = dt.now(tz.utc) + offset
         if isinstance(offset, tuple):
-            value = dt.now() + td(*offset)
+            value = dt.now(tz.utc) + td(*offset)
 
         assert isinstance(value, dt)
         return value.replace(microsecond=0).isoformat()
