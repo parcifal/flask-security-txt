@@ -10,10 +10,11 @@ readme        = "README.MD"
 authors       = [
     { name = "M. P. van de Weerd", email = "michael@parcifal.dev" }
 ]
-dependencies  = [ "flask", "flask-babel", "pgpy" ]
-keywords      = [ "web", "security", "security.txt" ]
-license       = { text = "LICENCE" }
-classifiers   = [
+dependencies           = [ "flask", "pgpy" ]
+optional-dependencies  = [ "flask-babel" ]
+keywords               = [ "web", "security", "security.txt" ]
+license                = { text = "LICENCE" }
+classifiers            = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Framework :: Flask",
