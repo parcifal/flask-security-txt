@@ -8,6 +8,7 @@ from datetime import datetime as dt, timedelta as td, timezone as tz
 from importlib.metadata import version
 
 from flask import Flask, Response, request, url_for, current_app
+from flask_babel import get_babel
 from pgpy import PGPKey, PGPMessage
 from werkzeug.routing import BuildError
 
@@ -40,6 +41,7 @@ class SecurityTxt:
                  default_endpoint: str = "security_txt",
                  default_contact_mailbox: str = "security",
                  default_expires_offset: tuple = (0, 0, 0, 0, 0, 0, 1),
+                 default_preferred_languages: tuple = ("en", ),
                  default_canonical: str = None,
                  default_dir: str = ".well-known",
                  default_file_name: str = "security.txt",
@@ -52,6 +54,7 @@ class SecurityTxt:
         self._default_endpoint = default_endpoint
         self._default_contact_mailbox = default_contact_mailbox
         self._default_expires_offset = default_expires_offset
+        self._default_preferred_languages = default_preferred_languages
         self._default_canonical = default_canonical or default_endpoint
         self._default_dir = default_dir
         self._default_file_name = default_file_name
@@ -281,17 +284,17 @@ class SecurityTxt:
         """
         value = current_app.config.get("SECURITY_TXT_PREFERRED_LANGUAGES")
 
+        if "babel" not in current_app.extensions:
+            value = self._default_preferred_languages or ""
         if isinstance(value, str):
             return value
         if isinstance(value, (list, tuple)):
             return ", ".join(value)
-        if not hasattr(current_app, "babel_instance"):
-            return ""
 
-        babel = getattr(current_app, "babel_instance")
+        babel = get_babel()
 
         return ", ".join([
-            t.language for t in getattr(babel, "list_translations")()
+            t.language for t in getattr(babel.instance, "list_translations")()
         ])
 
     def _get_field_value_canonical(self):
