@@ -8,6 +8,7 @@ from datetime import datetime as dt, timedelta as td, timezone as tz
 from importlib.metadata import version
 
 from flask import Flask, Response, request, url_for, current_app
+from flask_babel import get_babel
 from pgpy import PGPKey, PGPMessage
 from werkzeug.routing import BuildError
 
@@ -285,13 +286,14 @@ class SecurityTxt:
             return value
         if isinstance(value, (list, tuple)):
             return ", ".join(value)
-        if not hasattr(current_app, "babel_instance"):
+
+        babel = get_babel()
+
+        if babel is None:
             return ""
 
-        babel = getattr(current_app, "babel_instance")
-
         return ", ".join([
-            t.language for t in getattr(babel, "list_translations")()
+            t.language for t in getattr(babel.instance, "list_translations")()
         ])
 
     def _get_field_value_canonical(self):
