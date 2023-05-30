@@ -8,6 +8,7 @@ from datetime import datetime as dt, timedelta as td, timezone as tz
 from importlib.metadata import version
 
 from flask import Flask, Response, request, url_for, current_app
+from flask_babel import get_babel
 from pgpy import PGPKey, PGPMessage
 from werkzeug.routing import BuildError
 
@@ -290,7 +291,6 @@ class SecurityTxt:
         if isinstance(value, (list, tuple)):
             return ", ".join(value)
 
-        from flask_babel import get_babel
         babel = get_babel()
 
         return ", ".join([
