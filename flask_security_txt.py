@@ -36,7 +36,7 @@ class SecurityTxt:
     Extends Flask application with a dynamically generated security.txt.
     """
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def __init__(self, app: Flask = None,
                  default_endpoint: str = "security_txt",
                  default_contact_mailbox: str = "security",
