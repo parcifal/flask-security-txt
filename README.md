@@ -1,5 +1,12 @@
 # Flask-SecurityTxt
 
+[![release](https://img.shields.io/gitea/v/release/parcifal/flask-security-txt?gitea_url=https%3A%2F%2Fforgejo.parcifal.dev&label=latest+release)][release]
+[![pypi](https://img.shields.io/pypi/v/Flask-SecurityTxt?label=pypi+release)][pypi]
+[![develop](https://forgejo.parcifal.dev/parcifal/flask-security-txt/badges/workflows/push.yml/badge.svg?label=develop&branch=develop)][develop]
+[![master](https://forgejo.parcifal.dev/parcifal/flask-security-txt/badges/workflows/push.yml/badge.svg?label=master&branch=master)][master]
+[![gitlab](https://img.shields.io/gitlab/last-commit/parcifal%2Fflask-security-txt?label=gitlab+mirror)][gitlab]
+[![github](https://img.shields.io/github/last-commit/parcifal%2Fflask-security-txt?label=github+mirror)][github]
+
 Flask-SecurityTxt is a simple extension for Flask that makes it easy to add a 
 security.txt file to your website. This file, as specified by the [Internet 
 Security Research Group](https://securitytxt.org/), is used to provide 
@@ -74,3 +81,19 @@ Contact: mailto:security@example.com
 Encryption: https://example.com/key.asc
 Canonical: https://example.com/.well-known/security.txt
 ```
+
+## Contributing
+
+Found a bug? Have a suggestion? Open an issue or submit a merge request at
+[the Forgejo repository](https://forgejo.parcifal.dev/parcifal/flask-security-txt). All 
+contributions are welcome.
+
+[license]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/master/LICENSE
+
+[release]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/releases/latest
+[gitlab]: https://gitlab.com/parcifal/flask-security-txt
+[github]: https://github.com/parcifal/flask-security-txt
+[develop]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/develop
+[master]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/master
+
+[pypi]: https://pypi.org/project/Flask-SecurityTxt/
