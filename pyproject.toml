@@ -7,21 +7,30 @@ name          = "Flask-SecurityTxt"
 version       = "1.3.9"
 description   = "A Flask extension for creating and serving security.txt files"
 readme        = "README.md"
+license       = "AGPL-3.0-only"
+license-files = [ "LICENSE" ]
 authors       = [
     { name = "M.P. van de Weerd", email = "michael@parcifal.dev" }
 ]
-dependencies           = [ "flask", "flask-babel", "pgpy", "standard-imghdr" ]
-keywords               = [ "web", "security", "security.txt" ]
-license                = { text = "LICENSE" }
-classifiers            = [
-    "Development Status :: 5 - Production/Stable",
+keywords      = [
+    "web", "security", "security.txt"
+]
+classifiers   = [
     "Environment :: Web Environment",
     "Framework :: Flask",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers"
 ]
-
+dependencies = [ "flask", "flask-babel", "pgpy", "standard-imghdr" ]
 
 [project.urls]
 "Homepage"     = "https://forgejo.parcifal.dev/parcifal/flask-security-txt"
 "Bug Tracker"  = "https://forgejo.parcifal.dev/parcifal/flask-security-txt/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "coverage"
+]

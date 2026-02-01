@@ -1,0 +1,5 @@
+[run]
+
+branch          = True
+command_line    = -m unittest discover tests
+source          = flask_security_txt.py
