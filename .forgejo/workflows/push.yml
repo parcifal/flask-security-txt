@@ -10,7 +10,7 @@ jobs:
       - name: "Run PyLint"
         uses: https://forgejo.parcifal.dev/actions/pylint@v1
         with:
-          sources: flask_security_txt.py test
+          sources: flask_security_txt test
 
   test:
     runs-on: docker

@@ -21,7 +21,7 @@ classifiers   = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers"
 ]
-dependencies = [ "flask", "flask-babel", "pgpy", "standard-imghdr" ]
+dependencies = [ "flask", "flask-babel", "pgpy", "cryptography>=41,<43" ]
 
 [project.urls]
 "Homepage"     = "https://forgejo.parcifal.dev/parcifal/flask-security-txt"
@@ -34,3 +34,6 @@ dev = [
     "pytest-cov",
     "coverage"
 ]
+
+[tool.setuptoolspackages.find]
+include = [ "flask_security_txt" ]

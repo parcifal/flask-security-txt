@@ -6,4 +6,5 @@ build/
 *.egg-info/
 dist/
 .coverage
+coverage.md
 pytest.xml
