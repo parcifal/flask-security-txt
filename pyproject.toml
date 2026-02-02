@@ -35,5 +35,5 @@ dev = [
     "coverage"
 ]
 
-[tool.setuptoolspackages.find]
+[tool.setuptools.packages.find]
 include = [ "flask_security_txt" ]
