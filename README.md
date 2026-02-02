@@ -13,6 +13,11 @@ Security Research Group](https://securitytxt.org/), is used to provide
 information to security researchers about how to report vulnerabilities in your 
 website.
 
+ > The Flask-SecurityTxt logo makes use of the [`cloud-lock-outline`][lock] 
+ > icon created by [Michael Richins][richins] as part of the [Material Design 
+ > Icons (MDI) library][mdi] and published through 
+ > [Pictogrammers][pictogrammers] under the Apache License 2.0.
+
 ## Installation
 
 You can install Flask-SecurityTxt using pip:
@@ -87,6 +92,11 @@ Canonical: https://example.com/.well-known/security.txt
 Found a bug? Have a suggestion? Open an issue or submit a merge request at
 [the Forgejo repository](https://forgejo.parcifal.dev/parcifal/flask-security-txt). All 
 contributions are welcome.
+
+[pictogrammers]: https://pictogrammers.com/
+[richins]: https://pictogrammers.com/contributor/MrGrigri/
+[lock]: https://pictogrammers.com/library/mdi/icon/cloud-lock-outline/
+[mdi]: https://pictogrammers.com/library/mdi/
 
 [license]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/master/LICENSE
 
