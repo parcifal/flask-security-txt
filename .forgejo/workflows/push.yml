@@ -1,0 +1,134 @@
+on: [ push ]
+
+jobs:
+  lint:
+    runs-on: docker
+    steps:
+      - name: "Checkout"
+        uses: https://data.forgejo.org/actions/checkout@v3
+
+      - name: "Run PyLint"
+        uses: https://forgejo.parcifal.dev/actions/pylint@v1
+        with:
+          sources: flask_security_txt test
+
+  test:
+    runs-on: docker
+    steps:
+      - name: "Checkout"
+        uses: https://data.forgejo.org/actions/checkout@v3
+
+      - name: "Run PyTest"
+        uses: https://forgejo.parcifal.dev/actions/pytest@v1
+
+  setup:
+    if: github.ref_name == 'develop' || github.ref_name == 'master'
+    runs-on: docker
+    needs:
+      - lint
+      - test
+    outputs:
+      tag: ${{ steps.tag.outputs.name }}
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: "Checkout"
+        uses: https://data.forgejo.org/actions/checkout@v3
+
+      - name: "Retrieve version"
+        id: version
+        uses: https://forgejo.parcifal.dev/actions/toml-attribute@v1
+        with:
+          key: project.version
+
+      - name: "Determine tag"
+        id: tag
+        shell: bash
+        run: |
+          TAG="${{ steps.version.outputs.value }}"
+          
+          if [ "${{ github.ref_name }}" = "develop" ]; then
+            TAG="$TAG-dev"
+          fi
+          
+          echo "$TAG"
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+
+  build:
+    if: github.ref_name == 'develop' || github.ref_name == 'master'
+    runs-on: docker
+    needs: setup
+    outputs:
+      dist: ${{ steps.build.outputs.dist }}
+    steps:
+      - name: "Checkout"
+        uses: https://data.forgejo.org/actions/checkout@v3
+
+      - name: "Build dist"
+        id: build
+        uses: https://forgejo.parcifal.dev/actions/python/build@v1
+
+      - name: "Upload dist"
+        uses: https://data.forgejo.org/actions/upload-artifact@v3
+        with:
+          name: "dist"
+          path: |
+            ${{ steps.build.outputs.dist }}*.tar.gz
+            ${{ steps.build.outputs.dist }}*.whl
+
+  publish:
+    if: github.ref_name == 'develop' || github.ref_name == 'master'
+    runs-on: docker
+    needs: build
+    steps:
+      - name: "Download dist"
+        uses: https://data.forgejo.org/actions/download-artifact@v3
+        with:
+          name: "dist"
+          path: dist
+
+      - name: "Publish to PyPI"
+        if: ${{ github.ref_name == 'master' }}
+        uses: https://forgejo.parcifal.dev/actions/twine@v1
+        with:
+          repository: pypi
+          token: ${{ secrets.PYPI_TOKEN }}
+
+      - name: "Publish to Forgejo PyPI"
+        if: ${{ github.ref_name == 'master' }}
+        uses: https://forgejo.parcifal.dev/actions/twine@v1
+        with:
+          repository: https://forgejo.parcifal.dev/api/packages/parcifal/pypi
+          token: ${{ secrets.FORGEJO_PYPI_TOKEN }}
+
+  release:
+    if: github.ref_name == 'develop' || github.ref_name == 'master'
+    runs-on: docker
+    needs:
+      - setup
+      - build
+    steps:
+      - name: "Checkout"
+        uses: https://data.forgejo.org/actions/checkout@v3
+
+      - name: "Download dist"
+        uses: https://data.forgejo.org/actions/download-artifact@v3
+        with:
+          name: "dist"
+          path: dist
+
+      - name: "Create tag"
+        uses: https://forgejo.parcifal.dev/actions/git/tag/create@v1
+        with:
+          tag: ${{ needs.setup.outputs.tag }}
+          message: "Release ${{ needs.setup.outputs.tag }}"
+
+      - name: "Create release"
+        uses: https://data.forgejo.org/actions/forgejo-release@v2.9.0
+        with:
+          direction: upload
+          title: "Release ${{ needs.setup.outputs.tag }}"
+          tag: ${{ needs.setup.outputs.tag }}
+          override: true
+          prerelease: ${{ github.ref_name == 'develop' }}
+          release-dir: dist
+
