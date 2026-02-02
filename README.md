@@ -7,6 +7,8 @@
 [![gitlab](https://img.shields.io/gitlab/last-commit/parcifal%2Fflask-security-txt?label=gitlab+mirror)][gitlab]
 [![github](https://img.shields.io/github/last-commit/parcifal%2Fflask-security-txt?label=github+mirror)][github]
 
+![Flask-SecurityTxt Logo][logo]
+
 Flask-SecurityTxt is a simple extension for Flask that makes it easy to add a 
 security.txt file to your website. This file, as specified by the [Internet 
 Security Research Group](https://securitytxt.org/), is used to provide 
@@ -92,6 +94,8 @@ Canonical: https://example.com/.well-known/security.txt
 Found a bug? Have a suggestion? Open an issue or submit a merge request at
 [the Forgejo repository](https://forgejo.parcifal.dev/parcifal/flask-security-txt). All 
 contributions are welcome.
+
+[logo]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/raw/branch/migrate-forgejo/assets/logo.png
 
 [pictogrammers]: https://pictogrammers.com/
 [richins]: https://pictogrammers.com/contributor/MrGrigri/
