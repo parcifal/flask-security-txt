@@ -18,7 +18,7 @@ website.
 You can install Flask-SecurityTxt using pip:
 
 ```bash
-pip install flask-securitytxt
+pip install Flask-SecurityTxt
 ```
 
 ## Usage
