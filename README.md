@@ -1,17 +1,31 @@
 # Flask-SecurityTxt
 
+[![release](https://img.shields.io/gitea/v/release/parcifal/flask-security-txt?gitea_url=https%3A%2F%2Fforgejo.parcifal.dev&label=latest+release)][release]
+[![pypi](https://img.shields.io/pypi/v/Flask-SecurityTxt?label=pypi+release)][pypi]
+[![develop](https://forgejo.parcifal.dev/parcifal/flask-security-txt/badges/workflows/push.yml/badge.svg?label=develop&branch=develop)][develop]
+[![master](https://forgejo.parcifal.dev/parcifal/flask-security-txt/badges/workflows/push.yml/badge.svg?label=master&branch=master)][master]
+[![gitlab](https://img.shields.io/gitlab/last-commit/parcifal%2Fflask-security-txt?label=gitlab+mirror)][gitlab]
+[![github](https://img.shields.io/github/last-commit/parcifal%2Fflask-security-txt?label=github+mirror)][github]
+
+![Flask-SecurityTxt Logo][logo]
+
 Flask-SecurityTxt is a simple extension for Flask that makes it easy to add a 
 security.txt file to your website. This file, as specified by the [Internet 
 Security Research Group](https://securitytxt.org/), is used to provide 
 information to security researchers about how to report vulnerabilities in your 
 website.
 
+ > The Flask-SecurityTxt logo makes use of the [`cloud-lock-outline`][lock] 
+ > icon created by [Michael Richins][richins] as part of the [Material Design 
+ > Icons (MDI) library][mdi] and published through 
+ > [Pictogrammers][pictogrammers] under the Apache License 2.0.
+
 ## Installation
 
 You can install Flask-SecurityTxt using pip:
 
 ```bash
-pip install flask-securitytxt
+pip install Flask-SecurityTxt
 ```
 
 ## Usage
@@ -74,3 +88,26 @@ Contact: mailto:security@example.com
 Encryption: https://example.com/key.asc
 Canonical: https://example.com/.well-known/security.txt
 ```
+
+## Contributing
+
+Found a bug? Have a suggestion? Open an issue or submit a merge request at
+[the Forgejo repository](https://forgejo.parcifal.dev/parcifal/flask-security-txt). All 
+contributions are welcome.
+
+[logo]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/raw/branch/migrate-forgejo/assets/logo.png
+
+[pictogrammers]: https://pictogrammers.com/
+[richins]: https://pictogrammers.com/contributor/MrGrigri/
+[lock]: https://pictogrammers.com/library/mdi/icon/cloud-lock-outline/
+[mdi]: https://pictogrammers.com/library/mdi/
+
+[license]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/master/LICENSE
+
+[release]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/releases/latest
+[gitlab]: https://gitlab.com/parcifal/flask-security-txt
+[github]: https://github.com/parcifal/flask-security-txt
+[develop]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/develop
+[master]: https://forgejo.parcifal.dev/parcifal/flask-security-txt/src/branch/master
+
+[pypi]: https://pypi.org/project/Flask-SecurityTxt/
