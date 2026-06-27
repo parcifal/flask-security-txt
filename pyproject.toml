@@ -21,7 +21,13 @@ classifiers   = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers"
 ]
-dependencies = [ "flask", "flask-babel", "pgpy", "cryptography>=41,<43" ]
+dependencies = [
+    "flask",
+    "flask-babel",
+    "python-dateutil",
+    "pgpy",
+    "cryptography>=41,<43"
+]
 
 [project.urls]
 "Homepage"     = "https://forgejo.parcifal.dev/parcifal/flask-security-txt"

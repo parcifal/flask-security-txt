@@ -4,10 +4,12 @@ The Flask-SecurityTxt extension.
 import os
 
 from datetime import datetime as dt, timedelta as td, timezone as tz
+from dateutil import parser
 from importlib.metadata import version
 from typing import Any, Generator, Union, Optional
 from urllib.parse import urlsplit
 
+from dateutil.parser import ParserError
 from flask import Flask, Response, request, url_for
 from flask_babel import get_babel
 from pgpy import PGPKey, PGPMessage
@@ -62,7 +64,7 @@ class SecurityTxt:
         self._default_contact_mailbox = default_contact_mailbox
         self._default_expires_offset = default_expires_offset
         self._default_preferred_languages = default_preferred_languages
-        self._default_canonical = default_canonical or default_endpoint
+        self._default_canonical = default_canonical
         self._default_dir = default_dir
         self._default_file_name = default_file_name
         self._default_sign_key = default_sign_key
@@ -281,18 +283,22 @@ class SecurityTxt:
         value = self.app.config.get("SECURITY_TXT_EXPIRES")
 
         if isinstance(value, str):
-            return value
+            try:
+                value = parser.parse(value)
+            except ParserError:
+                raise ValueError("SECURITY_TXT_EXPIRES string does not use a"
+                                 "valid datetime format.")
         if isinstance(value, dt):
             return value.replace(microsecond=0).isoformat()
 
         if value is not None:
-            raise ValueError("SECURITY_TXT_EXPIRES must be None, a string, "
+            raise ValueError("SECURITY_TXT_EXPIRES is not None, a string, "
                              "or a datetime.")
 
         offset = self.app.config.get("SECURITY_TXT_EXPIRES_OFFSET")
 
         if not isinstance(offset, (td, tuple)):
-            raise ValueError("SECURITY_TXT_EXPIRES_OFFSET must be a timedelta "
+            raise ValueError("SECURITY_TXT_EXPIRES_OFFSET is not a timedelta "
                              "or tuple.")
 
         if isinstance(offset, tuple):
@@ -333,18 +339,20 @@ class SecurityTxt:
         """
         value = self.app.config.get("SECURITY_TXT_PREFERRED_LANGUAGES")
 
-        if "babel" not in self.app.extensions:
-            value = self._default_preferred_languages or ""
         if isinstance(value, str):
             return value
         if isinstance(value, (list, tuple)):
             return ", ".join(value)
 
-        babel = get_babel()
+        # fall back to babel if it is loaded, otherwise use default
+        if "babel" in self.app.extensions:
+            babel = get_babel()
+            return ", ".join([
+                t.language
+                for t in getattr(babel.instance, "list_translations")()
+            ])
 
-        return ", ".join([
-            t.language for t in getattr(babel.instance, "list_translations")()
-        ])
+        return ", ".join(self._default_preferred_languages or [])
 
     def _get_field_value_canonical(self):
         """
@@ -353,7 +361,8 @@ class SecurityTxt:
         """
         try:
             yield from self._get_urls_from_value(
-                self.app.config.get("SECURITY_TXT_CANONICAL"))
+                self.app.config.get("SECURITY_TXT_CANONICAL",
+                                    self.app.config.get("SECURITY_TXT_ENDPOINT")))
         except ValueError as error:
             raise ValueError(
                 "SECURITY_TXT_CANONICAL is misconfigured.") from error
@@ -368,7 +377,7 @@ class SecurityTxt:
                 self.app.config.get("SECURITY_TXT_POLICY"))
         except ValueError as error:
             raise ValueError(
-                "SECURITY_TXT_ENCRYPTION is misconfigured.") from error
+                "SECURITY_TXT_POLICY is misconfigured.") from error
 
     def _get_field_value_hiring(self):
         """
