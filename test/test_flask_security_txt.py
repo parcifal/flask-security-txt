@@ -14,7 +14,7 @@ from flask_security_txt import SecurityTxt
 class TestFlaskSecurityTxt(TestCase):
     """
     Test the view end-points of the Flask app. Verify correct functionality by
-    asserting that each known end-point has a response with an HTTP response
+    asserting that each known end-point has a response with an http: response
     code of 200, and that the response body contains the expected field lines.
 
     Note: constructor kwargs (e.g. default_endpoint) are passed via the
@@ -32,7 +32,7 @@ class TestFlaskSecurityTxt(TestCase):
                          constructor_kwargs: Optional[dict[str, Any]] = None,
                          app_config: Optional[dict[str, Any]] = None):
         """
-        Assert that the specified request URI returns HTTP 200.
+        Assert that the specified request URI returns the expected http: status code.
         """
         if constructor_kwargs is None:
             constructor_kwargs = {}
@@ -52,13 +52,8 @@ class TestFlaskSecurityTxt(TestCase):
         """
         Assert that each entry in `lines` appears as a complete line somewhere
         in the response body.
-
-        Note: the original implementation used re.match() against the full
-        response text, which only matches at the very start of the string and
-        will never find a line in the middle of the body. This version splits
-        the response into individual lines and matches each one exactly.
         """
-        if not lines:
+        if lines is None or len(lines) == 0:
             return
 
         if constructor_kwargs is None:
@@ -73,12 +68,14 @@ class TestFlaskSecurityTxt(TestCase):
 
         for expected_line in lines:
             pattern = re.compile(f"^{re.escape(expected_line)}$")
-            if not any(pattern.match(actual_line) for actual_line in
-                       response_lines):
-                raise self.failureException(
-                    f"Line \"{expected_line}\" not found in response.\n"
-                    f"Response body:\n{response.text}"
-                )
+
+            if any(pattern.match(line) for line in response_lines):
+                continue
+
+            raise self.failureException(
+                f"Line \"{expected_line}\" not found in response.\n"
+                f"Response body:\n{response.text}"
+            )
 
     def assertLineAbsent(self,
                          request_uri: str = "/.well-known/security.txt",
@@ -102,23 +99,27 @@ class TestFlaskSecurityTxt(TestCase):
         response = self.app.test_client().get(request_uri)
         response_lines = response.text.splitlines()
 
-        for actual_line in response_lines:
-            if actual_line.startswith(line_prefix):
-                raise self.failureException(
-                    f"Unexpected line starting with \"{line_prefix}\" found "
-                    f"in response:\n  {actual_line}"
-                )
+        for line in response_lines:
+            if not line.startswith(line_prefix):
+                continue
+
+            raise self.failureException(
+                f"Unexpected line starting with \"{line_prefix}\" found "
+                f"in response:\n  {line}"
+            )
 
     def test_security_txt_default(self):
-        """Default path /.well-known/security.txt returns 200."""
+        """
+        Assert that the security.txt is served as expected at the default path.
+        """
         self.assertHTTPStatus(
             request_uri="/.well-known/security.txt"
         )
 
-    def test_security_txt_endpoint_invalid(self):
+    def test_security_txt_endpoint_custom(self):
         """
-        Assert that the security.txt is still served as expected
-        with a custom endpoint.
+        Assert that the security.txt is served as expected
+        with a custom endpoint name.
         """
         self.assertHTTPStatus(app_config={
             "SECURITY_TXT_ENDPOINT": "spam"
@@ -139,7 +140,7 @@ class TestFlaskSecurityTxt(TestCase):
     def test_security_txt_custom_file_name(self):
         """
         Assert that the security.txt is served as expected
-        with a custom file-name.
+        with a custom file name.
         """
         self.assertHTTPStatus(
             request_uri="/.well-known/spam.txt",
@@ -150,7 +151,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_default(self):
         """
-        Assert that the default mailbox is rendered as expected.
+        Assert that the Contact field is rendered as expected by default.
         """
         self.assertLinesMatch(lines=[
             "Contact: mailto:security@localhost"
@@ -158,7 +159,8 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_mailbox(self):
         """
-        Assert that a custom mailbox is rendered as expected.
+        Assert that a custom SECURITY_TXT_CONTACT_MAILBOX
+        is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -171,7 +173,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_mailto(self):
         """
-        Assert that a custom mailto contact is rendered as expected.
+        Assert that a mailto: Contact value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -184,7 +186,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_https(self):
         """
-        Assert that a custom https contact is rendered as expected.
+        Assert that an https: Contact value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -197,7 +199,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_tel(self):
         """
-        Assert that a custom tel contact is rendered as expected.
+        Assert that a tel: Contact value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -210,7 +212,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_multiple(self):
         """
-        Assert that multiple contacts are rendered as expected.
+        Assert that multiple Contact values are rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -229,7 +231,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_contact_http(self):
         """
-        Assert that a custom http contact is not accepted.
+        Assert that an http: Contact value is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -238,9 +240,9 @@ class TestFlaskSecurityTxt(TestCase):
             }
         )
 
-    def test_config_contact_no_scheme(self):
+    def test_config_contact_scheme_absent(self):
         """
-        Assert that a contact without scheme is not accepted.
+        Assert that a Contact value without a scheme is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -251,7 +253,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_expires_offset_timedelta(self):
         """
-        Assert that an expires offset timedelta is accepted.
+        Assert that a timedelta SECURITY_TXT_EXPIRES_OFFSET is accepted.
         """
         self.assertHTTPStatus(
             app_config={
@@ -261,7 +263,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_expires_offset_tuple(self):
         """
-        Assert that an expires offset tuple is accepted.
+        Assert that a tuple SECURITY_TXT_EXPIRES_OFFSET is accepted.
         """
         self.assertHTTPStatus(
             app_config={
@@ -271,12 +273,12 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_expires_datetime(self):
         """
-        Assert that an expires datetime is rendered as expected.
+        Assert that a datetime SECURITY_TXT_EXPIRES value is rendered
+        as expected.
         """
-        expires = dt(2026, 12, 31, 23, 59, 59, tzinfo=tz.utc)
         self.assertLinesMatch(
             app_config={
-                "SECURITY_TXT_EXPIRES": expires
+                "SECURITY_TXT_EXPIRES": dt(2026, 12, 31, 23, 59, 59, tzinfo=tz.utc)
             },
             lines=[
                 "Expires: 2026-12-31T23:59:59+00:00"
@@ -285,7 +287,8 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_expires_string(self):
         """
-        Assert that an expires string is rendered as expected.
+        Assert that a string SECURITY_TXT_EXPIRES value
+        is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -296,23 +299,14 @@ class TestFlaskSecurityTxt(TestCase):
             ]
         )
 
-    def test_config_expires_ms_stripped(self):
+    def test_config_expires_microseconds_stripped(self):
         """
-        Assert that an expires datetime with microseconds
-        is rendered as expected.
+        Assert that microseconds are stripped from a datetime
+        SECURITY_TXT_EXPIRES value.
         """
         self.assertLinesMatch(
             app_config={
-                "SECURITY_TXT_EXPIRES": dt(
-                    2026,
-                    12,
-                    31,
-                    23,
-                    59,
-                    59,
-                    123456,
-                    tz.utc
-                )
+                "SECURITY_TXT_EXPIRES": dt(2026, 12, 31, 23, 59, 59, 123456, tz.utc)
             },
             lines=[
                 "Expires: 2026-12-31T23:59:59+00:00"
@@ -321,7 +315,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_expires_invalid(self):
         """
-        Assert that an invalid expires value is not accepted.
+        Assert that an invalid SECURITY_TXT_EXPIRES value is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -332,7 +326,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_expires_offset_invalid(self):
         """
-        Assert that an invalid expires offset is not accepted.
+        Assert that an invalid SECURITY_TXT_EXPIRES_OFFSET value is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -343,13 +337,13 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_encryption_default(self):
         """
-        Assert that no encryption URLs are rendered by default.
+        Assert that no Encryption line is rendered by default.
         """
         self.assertLineAbsent(line_prefix="Encryption:")
 
     def test_config_encryption_https(self):
         """
-        Assert that an encryption https URL is rendered as expected.
+        Assert that an https: Encryption value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -362,7 +356,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_encryption_openpgp4fpr(self):
         """
-        Assert that an encryption openpgp4fpr URL is rendered as expected.
+        Assert that an openpgp4fpr: Encryption value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -375,13 +369,13 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_acknowledgments_default(self):
         """
-        Assert that no acknowledgments are rendered by default.
+        Assert that no Acknowledgments line is rendered by default.
         """
         self.assertLineAbsent(line_prefix="Acknowledgments:")
 
     def test_config_acknowledgments_https(self):
         """
-        Assert that an acknowledgments https URL is rendered as expected.
+        Assert that an https: Acknowledgments value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -394,7 +388,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_acknowledgments_http_invalid(self):
         """
-        Assert that an acknowledgments https URL is rendered as expected.
+        Assert that an http: Acknowledgments value is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -405,7 +399,8 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_preferred_languages_default(self):
         """
-        Assert that the preferred language is en by default.
+        Assert that the Preferred-Languages field is rendered
+        as expected by default.
         """
         self.assertLinesMatch(lines=[
             "Preferred-Languages: en"
@@ -413,7 +408,8 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_preferred_languages_string(self):
         """
-        Assert that a string of preferred languages is rendered as expected.
+        Assert that a string SECURITY_TXT_PREFERRED_LANGUAGES value
+        is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -426,7 +422,8 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_preferred_languages_tuple(self):
         """
-        Assert that a tuple of preferred languages is rendered as expected.
+        Assert that a tuple SECURITY_TXT_PREFERRED_LANGUAGES value
+        is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -439,7 +436,8 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_preferred_languages_list(self):
         """
-        Assert that a list of preferred languages is rendered as expected.
+        Assert that a list SECURITY_TXT_PREFERRED_LANGUAGES value
+        is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -452,7 +450,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_canonical_https(self):
         """
-        Assert that a canonical URL is rendered as expected.
+        Assert that an https: Canonical value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -464,6 +462,9 @@ class TestFlaskSecurityTxt(TestCase):
         )
 
     def test_config_canonical_http_invalid(self):
+        """
+        Assert that an http: Canonical value is invalid.
+        """
         self.assertHTTPStatus(
             expected_status_code=500,
             app_config={
@@ -472,6 +473,9 @@ class TestFlaskSecurityTxt(TestCase):
         )
 
     def test_config_canonical_scheme_invalid(self):
+        """
+        Assert that a Canonical value with an unrecognized scheme is invalid.
+        """
         self.assertHTTPStatus(
             expected_status_code=500,
             app_config={
@@ -480,6 +484,9 @@ class TestFlaskSecurityTxt(TestCase):
         )
 
     def test_config_canonical_scheme_absent(self):
+        """
+        Assert that a Canonical value without a scheme is invalid.
+        """
         self.assertHTTPStatus(
             expected_status_code=500,
             app_config={
@@ -489,13 +496,13 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_policy_default(self):
         """
-        Assert that a policy line is absent by default.
+        Assert that no Policy line is rendered by default.
         """
         self.assertLineAbsent(line_prefix="Policy:")
 
     def test_config_policy_https(self):
         """
-        Assert that a policy https URL is rendered as expected.
+        Assert that an https: Policy value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -506,9 +513,9 @@ class TestFlaskSecurityTxt(TestCase):
             ]
         )
 
-    def test_config_policy_http(self):
+    def test_config_policy_http_invalid(self):
         """
-        Assert that a policy http URL is invalid.
+        Assert that an http: Policy value is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -519,7 +526,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_policy_scheme_invalid(self):
         """
-        Assert that a policy URL with a wrong scheme is invalid.
+        Assert that a Policy value with an unrecognized scheme is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -530,7 +537,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_policy_scheme_absent(self):
         """
-        Assert that a policy URL with an absent scheme is invalid.
+        Assert that a Policy value without a scheme is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -541,13 +548,13 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_hiring_default(self):
         """
-        Assert that hiring is not rendered by default.
+        Assert that no Hiring: line is rendered by default.
         """
         self.assertLineAbsent(line_prefix="Hiring:")
 
     def test_config_hiring_https(self):
         """
-        Assert that a hiring https URL is rendered as expected.
+        Assert that an https: Hiring value is rendered as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -560,7 +567,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_hiring_http_invalid(self):
         """
-        Assert that a hiring http URL is invalid.
+        Assert that an http: Hiring value is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -571,7 +578,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_hiring_scheme_invalid(self):
         """
-        Assert that a hiring non-https scheme URL is invalid.
+        Assert that a Hiring value with an unrecognized scheme is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -580,9 +587,9 @@ class TestFlaskSecurityTxt(TestCase):
             }
         )
 
-    def test_config_hiring_value_invalid(self):
+    def test_config_hiring_scheme_absent(self):
         """
-        Assert that a hiring value without scheme is invalid.
+        Assert that a Hiring value without a scheme is invalid.
         """
         self.assertHTTPStatus(
             expected_status_code=500,
@@ -593,13 +600,13 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_field_case_default(self):
         """
-        Assert that field have the standard case by default.
+        Assert that fields use standard case by default.
         """
         self.assertLinesMatch(lines=["Contact: mailto:security@localhost"])
 
     def test_config_field_case_standard(self):
         """
-        Assert that standard cased fields are rendered as expected.
+        Assert that SECURITY_TXT_FIELD_CASE "standard" renders fields as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -612,7 +619,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_field_case_lower(self):
         """
-        Assert that lower-cased fields are rendered as expected.
+        Assert that SECURITY_TXT_FIELD_CASE "lower" renders fields as expected.
         """
         self.assertLinesMatch(
             app_config={
@@ -625,7 +632,7 @@ class TestFlaskSecurityTxt(TestCase):
 
     def test_config_field_case_upper(self):
         """
-        Assert that upper-cased fields are rendered as expected.
+        Assert that SECURITY_TXT_FIELD_CASE "upper" renders fields as expected.
         """
         self.assertLinesMatch(
             app_config={

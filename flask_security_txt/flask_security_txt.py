@@ -105,12 +105,12 @@ class SecurityTxt:
         app.config.setdefault("SECURITY_TXT_FIELD_CASE",
                               self._default_field_case)
 
-        _dir = app.config.get("WELL_KNOWN_DIR",
-                              self._default_dir)
+        well_known_dir = app.config.get("WELL_KNOWN_DIR",
+                                        self._default_dir)
         name = app.config.get("SECURITY_TXT_FILE_NAME",
                               self._default_file_name)
 
-        app.add_url_rule(f"/{_dir}/{name}",
+        app.add_url_rule(f"/{well_known_dir}/{name}",
                          app.config.get("SECURITY_TXT_ENDPOINT"),
                          self._send_security_txt)
 
@@ -194,7 +194,7 @@ class SecurityTxt:
             "Contact": self._get_field_value_contact(),
             "Expires": self._get_field_value_expires(),
             "Encryption": self._get_field_value_encryption(),
-            "Acknowledgments": self._get_field_value_acknowledgements(),
+            "Acknowledgments": self._get_field_value_acknowledgments(),
             "Preferred-Languages": self._get_field_value_preferred_languages(),
             "Canonical": self._get_field_value_canonical(),
             "Policy": self._get_field_value_policy(),
@@ -286,19 +286,19 @@ class SecurityTxt:
             try:
                 value = parser.parse(value)
             except ParserError:
-                raise ValueError("SECURITY_TXT_EXPIRES string does not use a"
+                raise ValueError("SECURITY_TXT_EXPIRES string must use a"
                                  "valid datetime format.")
         if isinstance(value, dt):
             return value.replace(microsecond=0).isoformat()
 
         if value is not None:
-            raise ValueError("SECURITY_TXT_EXPIRES is not None, a string, "
+            raise ValueError("SECURITY_TXT_EXPIRES must be None, a string, "
                              "or a datetime.")
 
         offset = self.app.config.get("SECURITY_TXT_EXPIRES_OFFSET")
 
         if not isinstance(offset, (td, tuple)):
-            raise ValueError("SECURITY_TXT_EXPIRES_OFFSET is not a timedelta "
+            raise ValueError("SECURITY_TXT_EXPIRES_OFFSET must be a timedelta "
                              "or tuple.")
 
         if isinstance(offset, tuple):
@@ -320,17 +320,17 @@ class SecurityTxt:
             raise ValueError(
                 "SECURITY_TXT_ENCRYPTION is misconfigured.") from error
 
-    def _get_field_value_acknowledgements(self):
+    def _get_field_value_acknowledgments(self):
         """
         @return:
-            The value of the acknowledgements field.
+            The value of the acknowledgments field.
         """
         try:
             yield from self._get_urls_from_value(
                 self.app.config.get("SECURITY_TXT_ACKNOWLEDGEMENTS"))
         except ValueError as error:
             raise ValueError(
-                "SECURITY_TXT_ACKNOWLEDGEMENTS is misconfigured.") from error
+                "SECURITY_TXT_ACKNOWLEDGMENTS is misconfigured.") from error
 
     def _get_field_value_preferred_languages(self):
         """
