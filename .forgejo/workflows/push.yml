@@ -2,7 +2,7 @@ on: [ push ]
 
 jobs:
   lint:
-    runs-on: docker
+    runs-on: pylint
     steps:
       - name: "Checkout"
         uses: https://data.forgejo.org/actions/checkout@v3
@@ -13,7 +13,7 @@ jobs:
           sources: flask_security_txt test
 
   test:
-    runs-on: docker
+    runs-on: pytest
     steps:
       - name: "Checkout"
         uses: https://data.forgejo.org/actions/checkout@v3
