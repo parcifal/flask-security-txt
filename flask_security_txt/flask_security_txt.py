@@ -2,13 +2,12 @@
 The Flask-SecurityTxt extension.
 """
 import os
-
 from datetime import datetime as dt, timedelta as td, timezone as tz
-from dateutil import parser
 from importlib.metadata import version
-from typing import Any, Generator, Union, Optional
+from typing import Any, Generator, Union, Optional, Callable
 from urllib.parse import urlsplit
 
+from dateutil import parser
 from dateutil.parser import ParserError
 from flask import Flask, Response, request, url_for
 from flask_babel import get_babel
@@ -32,7 +31,7 @@ _DEFAULT_FOOTER = """
 #
 """
 
-_TYPE_OPTIONAL_STRINGS = Union[None, str, list[str], tuple[str]]
+_OptionalStringsType = Union[None, str, list[str], tuple[str]]
 
 _FIELD_CASE_DECORATORS = {
     "standard": lambda x: x,
@@ -120,13 +119,69 @@ class SecurityTxt:
         if sign_key is not None:
             self.sign_key, _ = PGPKey.from_file(sign_key)
 
+    def _render_section(self, section: str) -> Optional[str]:
+        key = f"SECURITY_TXT_{section.upper()}"
+        value = self.app.config.get(key)
+
+        if value is None or len(value) == 0:
+            return None
+
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be None or a string")
+
+        return value.format(version=version("Flask-SecurityTxt"))
+
+    def _render_header(self) -> Optional[str]:
+        return self._render_section("header")
+
+    def _render_footer(self) -> Optional[str]:
+        return self._render_section("footer")
+
+    def _render_comment(self, key: str) -> Optional[str]:
+        comment_key = f"SECURITY_TXT_{key.upper()}_COMMENT"
+
+        if comment_key not in self.app.config:
+            return None
+
+        return self.app.config.get(comment_key)
+
+    def _render_field(
+            self,
+            key: str,
+            field_case_decorator: Callable[[str], str]
+    ) -> list[str]:
+        item = self._get_fields().get(key)
+
+        if isinstance(item, Generator):
+            item = list(item)
+
+        if item is None:
+            return []
+
+        if not isinstance(item, (list, tuple)):
+            item = (item,)
+
+        if len(item) == 0:
+            return []
+
+        field = []
+
+        for value in item:
+            if not isinstance(value, str):
+                raise ValueError(f"SECURITY_TXT_{key.upper()} must be "
+                                 f"None, a string, or a list or tuple of "
+                                 f"strings.")
+
+            field.append(f"{field_case_decorator(key)}: {value}")
+
+        return field
+
     def _send_security_txt(self):
         """
         @return:
             The full security.txt as an HTTP response.
         """
         lines = []
-        header = self.app.config.get("SECURITY_TXT_HEADER")
 
         field_case = self.app.config.get("SECURITY_TXT_FIELD_CASE")
 
@@ -135,35 +190,23 @@ class SecurityTxt:
 
         field_case_decorator = _FIELD_CASE_DECORATORS[field_case]
 
+        header = self._render_header()
+
         if header is not None:
-            if not isinstance(header, str):
-                raise ValueError("SECURITY_TXT_HEADER must be None or a "
-                                 "string.")
-            lines.append(header.format(version=version("Flask-SecurityTxt")))
+            lines.append(header)
 
-        for key, item in self._get_fields().items():
-            if isinstance(item, Generator):
-                item = list(item)
+        for key in self._get_fields():
+            field = self._render_field(key, field_case_decorator)
 
-            if item is None or len(item) == 0:
+            if len(field) == 0:
                 continue
 
-            comment_key = f"SECURITY_TXT_{key.upper()}_COMMENT"
+            comment = self._render_comment(key)
 
-            if comment_key in self.app.config:
-                comment = self.app.config.get(comment_key)
+            if comment is not None:
                 lines.append(comment)
 
-            if not isinstance(item, (list, tuple)):
-                item = (item, )
-
-            for value in item:
-                if not isinstance(value, str):
-                    raise ValueError(f"SECURITY_TXT_{key.upper()} must be "
-                                     f"None, a string, or a list or tuple of "
-                                     f"strings.")
-
-                lines.append(f"{field_case_decorator(key)}: {value}")
+            lines.extend(field)
 
         footer = self.app.config.get("SECURITY_TXT_FOOTER")
 
@@ -202,8 +245,8 @@ class SecurityTxt:
         }
 
     def _get_urls_from_value(self,
-                             value: _TYPE_OPTIONAL_STRINGS,
-                             schemes: _TYPE_OPTIONAL_STRINGS=None):
+                             value: _OptionalStringsType,
+                             schemes: _OptionalStringsType=None):
         """
         Parse zero or more URLs from the specified config value. The URLs can
         be defined as either a full URL string starting with one of the
@@ -226,8 +269,8 @@ class SecurityTxt:
 
         for item in value:
             if not isinstance(item, str):
-                raise ValueError(f"URL must be None, a string, or a list or "
-                                 f"tuple of strings.")
+                raise ValueError("URL must be None, a string, or a list or "
+                                 "tuple of strings.")
 
             url = urlsplit(item)
 
@@ -285,9 +328,9 @@ class SecurityTxt:
         if isinstance(value, str):
             try:
                 value = parser.parse(value)
-            except ParserError:
+            except ParserError as error:
                 raise ValueError("SECURITY_TXT_EXPIRES string must use a"
-                                 "valid datetime format.")
+                                 "valid datetime format.") from error
         if isinstance(value, dt):
             return value.replace(microsecond=0).isoformat()
 

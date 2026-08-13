@@ -94,8 +94,8 @@ Canonical: https://example.com/.well-known/security.txt
 ## Contributing
 
 Found a bug? Have a suggestion? Open an issue or submit a merge request at
-[the Forgejo repository](https://scm.parcifal.dev/parcifal/flask-security-txt). All 
-contributions are welcome.
+[the Forgejo repository](https://scm.parcifal.dev/parcifal/flask-security-txt).
+All contributions are welcome.
 
 [logo]: https://scm.parcifal.dev/parcifal/flask-security-txt/raw/branch/master/assets/logo.png
 
