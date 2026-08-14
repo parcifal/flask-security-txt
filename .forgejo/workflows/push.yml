@@ -65,7 +65,7 @@ jobs:
 
       - name: "Build dist"
         id: build
-        uses: https://scm.parcifal.dev/actions/python/build@v1
+        uses: https://scm.parcifal.dev/actions/python/build@v2
 
       - name: "Upload dist"
         uses: https://data.forgejo.org/actions/upload-artifact@v3
