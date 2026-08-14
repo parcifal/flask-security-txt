@@ -23,7 +23,7 @@ jobs:
 
   setup:
     if: github.ref_name == 'develop' || github.ref_name == 'master'
-    runs-on: docker
+    runs-on: python
     needs:
       - lint
       - test
