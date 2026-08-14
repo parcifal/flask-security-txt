@@ -2,7 +2,7 @@ on: [ push ]
 
 jobs:
   lint:
-    runs-on: pylint
+    runs-on: python
     steps:
       - name: "Checkout"
         uses: https://data.forgejo.org/actions/checkout@v3
@@ -13,7 +13,7 @@ jobs:
           sources: flask_security_txt test
 
   test:
-    runs-on: pytest
+    runs-on: python
     steps:
       - name: "Checkout"
         uses: https://data.forgejo.org/actions/checkout@v3
@@ -55,7 +55,7 @@ jobs:
 
   build:
     if: github.ref_name == 'develop' || github.ref_name == 'master'
-    runs-on: docker
+    runs-on: python
     needs: setup
     outputs:
       dist: ${{ steps.build.outputs.dist }}
@@ -77,7 +77,7 @@ jobs:
 
   publish:
     if: github.ref_name == 'develop' || github.ref_name == 'master'
-    runs-on: docker
+    runs-on: python
     needs: build
     steps:
       - name: "Download dist"
@@ -131,4 +131,3 @@ jobs:
           override: true
           prerelease: ${{ github.ref_name == 'develop' }}
           release-dir: dist
-
