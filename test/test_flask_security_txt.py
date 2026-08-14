@@ -1,43 +1,52 @@
 """
 A test case for the Flask-SecurityTxt extension.
 """
-
-from unittest import TestCase
-
-from flask import Flask
-
-from flask_security_txt import SecurityTxt
+from .flask_security_txt_test_case import FlaskSecurityTxtTestCase
 
 
-class TestFlaskSecurityTxt(TestCase):
+class TestFlaskSecurityTxt(FlaskSecurityTxtTestCase):
     """
-    Test the view end-points of the Flask app. Verify correct functionality by
-    asserting that each known end-point has a response with an HTTP response
-    code of 200.
+    Test case for the Flask-SecurityTxt extension, excluding test_config-related
+    tests.
     """
 
-    def setUp(self) -> None:
-        app = Flask(__name__)
-        self.ext = SecurityTxt(app)
-        self.app = app.test_client()
+    def test_security_txt_default(self):
+        """
+        Assert that the security.txt is served as expected at the default path.
+        """
+        self.assertHTTPStatus(
+            request_uri="/.well-known/security.txt"
+        )
 
-    # Have PyLint ignore the casing of this method, in favor of the casing
-    # conventions of the unittest module.
-    #
-    # pylint: disable=invalid-name
-    def assertOK(self, request_uri: str):
+    def test_security_txt_endpoint_custom(self):
         """
-        Helper function to assert that the specified request URI returns a
-        response with an HTTP status code of 200.
+        Assert that the security.txt is served as expected
+        with a custom endpoint name.
+        """
+        self.assertHTTPStatus(app_config={
+            "SECURITY_TXT_ENDPOINT": "spam"
+        })
 
-        @param request_uri:
-            The request URI asserted to result in an HTTP status code of 200.
+    def test_security_txt_custom_dir(self):
         """
-        self.assertEqual(self.app.get(request_uri).status_code, 200)
+        Assert that the security.txt is served as expected
+        at a custom well-known dir.
+        """
+        self.assertHTTPStatus(
+            request_uri="/spam/security.txt",
+            app_config={
+                "WELL_KNOWN_DIR": "spam"
+            }
+        )
 
-    def test_security_txt(self):
+    def test_security_txt_custom_file_name(self):
         """
-        Assert that the security.txt end-point returns a response with an HTTP
-        status code of 200.
+        Assert that the security.txt is served as expected
+        with a custom file name.
         """
-        self.assertOK("/.well-known/security.txt")
+        self.assertHTTPStatus(
+            request_uri="/.well-known/spam.txt",
+            app_config={
+                "SECURITY_TXT_FILE_NAME": "spam.txt"
+            }
+        )
