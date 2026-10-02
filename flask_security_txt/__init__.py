@@ -1,5 +1,6 @@
 """
-A Flask extension for creating and serving security.txt files.
+Flask-SecurityTxt is a Flask extension that provides a simple way to implement
+the Security.txt specification.
 """
 
-from .flask_security_txt import SecurityTxt
+from .ext import SecurityTxt

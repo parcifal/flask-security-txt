@@ -1,12 +1,12 @@
 """
-Test the Flask-SecurityTxt configuration for the Acknowledgements field.
+Test the Flask-SecurityTxt configuration for the Acknowledgments field.
 """
 from test import FlaskSecurityTxtTestCase
 
 
-class TestConfigAcknowledgements(FlaskSecurityTxtTestCase):
+class TestConfigAcknowledgments(FlaskSecurityTxtTestCase):
     """
-    A test class for validating the acknowledgement-related configuration in
+    A test class for validating the acknowledgment-related configuration in
     Flask-SecurityTxt.
     """
 
@@ -22,7 +22,7 @@ class TestConfigAcknowledgements(FlaskSecurityTxtTestCase):
         """
         self.assertLinesMatch(
             app_config={
-                "SECURITY_TXT_ACKNOWLEDGEMENTS": "https://spam.eggs/bacon"
+                "SECURITY_TXT_ACKNOWLEDGMENTS": "https://spam.eggs/bacon"
             },
             lines=[
                 "Acknowledgments: https://spam.eggs/bacon"
@@ -36,6 +36,6 @@ class TestConfigAcknowledgements(FlaskSecurityTxtTestCase):
         self.assertHTTPStatus(
             expected_status_code=500,
             app_config={
-                "SECURITY_TXT_ACKNOWLEDGEMENTS": "http://spam.eggs/bacon"
+                "SECURITY_TXT_ACKNOWLEDGMENTS": "http://spam.eggs/bacon"
             }
         )

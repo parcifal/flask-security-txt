@@ -1,47 +1,79 @@
 [build-system]
-requires       = [ "setuptools>=61.0" ]
-build-backend  = "setuptools.build_meta"
+requires        = [ "setuptools>=77.0" ]
+build-backend   = "setuptools.build_meta"
 
 [project]
-name          = "Flask-SecurityTxt"
-version       = "1.3.11"
-description   = "A Flask extension for creating and serving security.txt files"
-readme        = "README.md"
-license       = "AGPL-3.0-only"
-license-files = [ "LICENSE" ]
-authors       = [
+name            = "Flask-SecurityTxt"
+version         = "1.4.0"
+description     = "A Flask extension for creating and serving security.txt files"
+readme          = "README.md"
+requires-python = ">=3.9"
+license         = "AGPL-3.0-only"
+license-files   = [ "LICENSE" ]
+authors         = [
     { name = "M.P. van de Weerd", email = "michael@parcifal.dev" }
 ]
-keywords      = [
-    "web", "security", "security.txt"
+keywords        = [
+    "web", "security", "security.txt", "rfc9116", "well-known"
 ]
-classifiers   = [
+classifiers     = [
     "Environment :: Web Environment",
     "Framework :: Flask",
     "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers"
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Security",
+    "Typing :: Typed"
 ]
-dependencies = [
+dependencies    = [
     "flask",
-    "flask-babel",
-    "python-dateutil",
-    "pgpy",
-    "cryptography>=41,<43",
-    "standard-imghdr"
+    "python-dateutil"
 ]
-
-[project.urls]
-"Homepage"     = "https://forgejo.parcifal.dev/parcifal/flask-security-txt"
-"Bug Tracker"  = "https://forgejo.parcifal.dev/parcifal/flask-security-txt/issues"
 
 [project.optional-dependencies]
+babel = [
+    "flask-babel"
+]
+sign = [
+    "pgpy",
+    "cryptography>=41,<43",
+    "standard-imghdr; python_version >= '3.13'"
+]
 dev = [
+    "Flask-SecurityTxt[babel,sign]",
     "pylint",
     "pytest",
     "pytest-cov",
     "coverage",
-    "standard-imghdr; python_version >= '3.13'"
+    "build"
 ]
 
+[project.urls]
+"Homepage"    = "https://scm.parcifal.dev/parcifal/Flask-SecurityTxt"
+"Source"      = "https://scm.parcifal.dev/parcifal/Flask-SecurityTxt"
+"Bug Tracker" = "https://scm.parcifal.dev/parcifal/Flask-SecurityTxt/issues"
+
 [tool.setuptools.packages.find]
-include = [ "flask_security_txt" ]
+include = [ "flask_security_txt*" ]
+
+[tool.pytest.ini_options]
+addopts   = [ "--cov=flask_security_txt" ]
+testpaths = [ "test" ]
+
+[tool.coverage.run]
+branch       = true
+command_line = "-m unittest discover test"
+source       = [ "flask_security_txt" ]
+
+[tool.pylint.reports]
+evaluation     = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
+output-format  = "text"
+reports        = "no"
+score          = true
